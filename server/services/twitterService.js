@@ -1,31 +1,52 @@
 const axios = require('axios');
 require('dotenv').config();
 
-// You'll need to set up Twitter API credentials
-// Create a .env file with your Twitter API bearer token
+// Twitter API credentials from .env file
 const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 
 // Log token status (without revealing the actual token)
 console.log(`Twitter API token status: ${BEARER_TOKEN ? 'Present' : 'Missing'}`);
 
-// For Twitter API v2, we need to use OAuth 1.0a for user tokens
-// The token you provided appears to be a user token (not a bearer token)
-// For now, we'll use mock data since we need to reconfigure the authentication
+// Create Twitter API client with bearer token authentication
+const twitterApiClient = axios.create({
+  baseURL: 'https://api.twitter.com/2',
+  headers: {
+    Authorization: `Bearer ${BEARER_TOKEN}`
+  }
+});
 
 async function fetchTweetsByTopic(topic, maxTweets = 20) {
   try {
-    console.log(`Requested ${maxTweets} tweets about "${topic}"`);
+    console.log(`Attempting to fetch ${maxTweets} tweets about "${topic}"`);
     
-    // Currently using mock data due to authentication issues with the Twitter API
-    // The token provided appears to be a user access token, not a bearer token
-    // Twitter API v2 requires different authentication setup for user tokens
+    // Ensure maxTweets is within the allowed range
+    const tweetCount = Math.min(Math.max(5, maxTweets), 50);
     
-    console.log('Using mock tweets instead of actual Twitter API');
-    return getMockTweets(topic, maxTweets);
+    // Using Twitter API v2 search recent tweets endpoint
+    const response = await twitterApiClient.get('/tweets/search/recent', {
+      params: {
+        query: topic,
+        'max_results': tweetCount,
+        'tweet.fields': 'created_at,public_metrics'
+      }
+    });
     
+    if (response.data && response.data.data) {
+      console.log(`Successfully fetched ${response.data.data.length} tweets`);
+      return response.data.data;
+    } else {
+      console.log('No tweets found in the response, falling back to mock data');
+      return getMockTweets(topic, maxTweets);
+    }
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error fetching tweets:', error.message);
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', JSON.stringify(error.response.data));
+    }
+    
     console.log('Falling back to mock tweets');
+    // If Twitter API fails, return mock data for development
     return getMockTweets(topic, maxTweets);
   }
 }
