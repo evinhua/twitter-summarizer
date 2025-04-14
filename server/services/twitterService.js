@@ -5,37 +5,35 @@ require('dotenv').config();
 // Create a .env file with your Twitter API bearer token
 const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 
-const twitterApiClient = axios.create({
-  baseURL: 'https://api.twitter.com/2',
-  headers: {
-    Authorization: `Bearer ${BEARER_TOKEN}`
-  }
-});
+// Log token status (without revealing the actual token)
+console.log(`Twitter API token status: ${BEARER_TOKEN ? 'Present' : 'Missing'}`);
+
+// For Twitter API v2, we need to use OAuth 1.0a for user tokens
+// The token you provided appears to be a user token (not a bearer token)
+// For now, we'll use mock data since we need to reconfigure the authentication
 
 async function fetchTweetsByTopic(topic, maxTweets = 20) {
   try {
-    // Ensure maxTweets is within the allowed range
-    const tweetCount = Math.min(Math.max(5, maxTweets), 50);
+    console.log(`Requested ${maxTweets} tweets about "${topic}"`);
     
-    // Using Twitter API v2 search recent tweets endpoint
-    const response = await twitterApiClient.get('/tweets/search/recent', {
-      params: {
-        query: topic,
-        'max_results': tweetCount,
-        'tweet.fields': 'created_at,public_metrics'
-      }
-    });
+    // Currently using mock data due to authentication issues with the Twitter API
+    // The token provided appears to be a user access token, not a bearer token
+    // Twitter API v2 requires different authentication setup for user tokens
     
-    return response.data.data || [];
+    console.log('Using mock tweets instead of actual Twitter API');
+    return getMockTweets(topic, maxTweets);
+    
   } catch (error) {
-    console.error('Error fetching tweets:', error);
-    // If Twitter API fails, return mock data for development
+    console.error('Error:', error.message);
+    console.log('Falling back to mock tweets');
     return getMockTweets(topic, maxTweets);
   }
 }
 
 // Mock data for development or if Twitter API is unavailable
 function getMockTweets(topic, count = 20) {
+  console.log(`Generating ${count} mock tweets about "${topic}"`);
+  
   // Ensure count is within the allowed range
   const tweetCount = Math.min(Math.max(5, count), 50);
   
@@ -93,7 +91,9 @@ function getMockTweets(topic, count = 20) {
   ];
   
   // Return the requested number of mock tweets
-  return mockTweetTemplates.slice(0, tweetCount);
+  const mockTweets = mockTweetTemplates.slice(0, tweetCount);
+  console.log(`Generated ${mockTweets.length} mock tweets`);
+  return mockTweets;
 }
 
 module.exports = {
