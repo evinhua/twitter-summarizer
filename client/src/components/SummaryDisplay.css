@@ -1,0 +1,59 @@
+.summary-display {
+  background-color: white;
+  border: 1px solid #e1e8ed;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stats {
+  background-color: #f5f8fa;
+  padding: 15px;
+  border-bottom: 1px solid #e1e8ed;
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #657786;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #14171a;
+}
+
+.summary-section,
+.sentiment-section {
+  padding: 20px;
+}
+
+.summary-section {
+  border-bottom: 1px solid #e1e8ed;
+}
+
+h2 {
+  color: #14171a;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.summary-content,
+.sentiment-content {
+  line-height: 1.6;
+  color: #14171a;
+  white-space: pre-wrap;
+}
+
+.sentiment-content {
+  font-style: italic;
+}

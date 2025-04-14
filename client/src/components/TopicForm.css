@@ -1,0 +1,105 @@
+.topic-form {
+  background-color: #f5f8fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #14171a;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd6dd;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus {
+  border-color: #1da1f2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.2);
+}
+
+.slider-group {
+  margin-top: 20px;
+  margin-bottom: 25px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-label {
+  font-size: 14px;
+  color: #657786;
+  min-width: 20px;
+}
+
+input[type="range"] {
+  flex-grow: 1;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ccd6dd;
+  outline: none;
+  border-radius: 5px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1da1f2;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #1da1f2;
+  cursor: pointer;
+  border: none;
+}
+
+.tweet-count {
+  font-weight: bold;
+  color: #1da1f2;
+}
+
+button {
+  background-color: #1da1f2;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 30px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: #0c8bd9;
+}
+
+button:disabled {
+  background-color: #aab8c2;
+  cursor: not-allowed;
+}
