@@ -25,7 +25,7 @@ async function fetchTweetsByTopic(topic, maxTweets = 20) {
     // Using Twitter API v2 search recent tweets endpoint
     const response = await twitterApiClient.get('/tweets/search/recent', {
       params: {
-        query: topic,
+        query: encodeURIComponent(topic),
         'max_results': tweetCount,
         'tweet.fields': 'created_at,public_metrics'
       }
