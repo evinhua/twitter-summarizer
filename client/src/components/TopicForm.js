@@ -65,5 +65,3 @@ function TopicForm({ onSubmit, disabled }) {
 }
 
 export default TopicForm;
-
-export default TopicForm;
