@@ -1,5 +1,6 @@
 const axios = require('axios');
 require('dotenv').config();
+const serperService = require('./serperService');
 
 // Twitter API credentials from .env file
 const BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
@@ -19,14 +20,46 @@ async function fetchTweetsByTopic(topic, maxTweets = 20) {
   try {
     console.log(`Attempting to fetch ${maxTweets} tweets about "${topic}"`);
     
-    // The Twitter API is returning a 403 error because the account doesn't have
-    // the required access level for the v2 API endpoints.
-    // Using mock data instead to allow the application to function.
-    console.log('Twitter API returned 403 Forbidden - Using mock tweets instead');
-    return getMockTweets(topic, maxTweets);
+    // Try to use Twitter API
+    try {
+      const response = await twitterApiClient.get('/tweets/search/recent', {
+        params: {
+          query: topic,
+          max_results: maxTweets,
+          'tweet.fields': 'created_at,public_metrics'  // Fixed: Use quotes around parameter name with dot
+        }
+      });
+      
+      if (response.data && response.data.data) {
+        console.log(`Successfully retrieved ${response.data.data.length} tweets from Twitter API`);
+        return response.data.data.map(tweet => ({
+          id: tweet.id,
+          text: tweet.text
+        }));
+      }
+    } catch (twitterError) {
+      console.error('Twitter API error:', twitterError.message);
+      console.log('Twitter API access failed - Trying Google search fallback');
+      
+      // Try to use Google search via Serper API as fallback
+      try {
+        const searchResults = await serperService.searchTopicOnGoogle(topic, maxTweets);
+        const generatedTweets = serperService.generateTweetsFromSearchResults(searchResults, maxTweets);
+        
+        if (generatedTweets.length > 0) {
+          console.log(`Using ${generatedTweets.length} tweets generated from Google search results`);
+          return generatedTweets;
+        }
+      } catch (searchError) {
+        console.error('Google search fallback error:', searchError.message);
+      }
+    }
     
+    // If both Twitter API and Google search fail, use mock tweets
+    console.log('Both Twitter API and Google search failed - Using mock tweets instead');
+    return getMockTweets(topic, maxTweets);
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error in fetchTweetsByTopic:', error.message);
     console.log('Falling back to mock tweets');
     return getMockTweets(topic, maxTweets);
   }
