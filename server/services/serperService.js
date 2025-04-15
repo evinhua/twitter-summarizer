@@ -4,19 +4,47 @@ require('dotenv').config();
 // Serper API key
 const SERPER_API_KEY = process.env.SERPER_API_KEY || "efad9c66159909eff3ce534f8da47d4ba33671d9";
 
-// Create Google Search client using mock data
+/**
+ * Search for a topic using Google via direct Google search
+ * @param {string} topic - The topic to search for
+ * @param {number} maxResults - Maximum number of results to return
+ * @returns {Array} - Array of search results formatted as tweet-like objects
+ */
 async function searchTopicOnGoogle(topic, maxResults = 20) {
   try {
-    console.log(`Searching Google for "${topic}" via mock data`);
+    console.log(`Searching Google for "${topic}" directly`);
     
-    // Generate mock search results based on the topic
-    const mockResults = generateMockResults(topic, maxResults);
+    // Use direct Google search with axios
+    const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
+      params: {
+        key: 'AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY', // Public API key for demo purposes
+        cx: '017576662512468239146:omuauf_lfve', // Custom search engine ID
+        q: topic,
+        num: Math.min(maxResults, 10) // Google API limits to 10 results per request
+      }
+    });
     
-    console.log(`Generated ${mockResults.length} mock search results for "${topic}"`);
-    return mockResults;
+    // Extract search results
+    const searchResults = response.data.items || [];
+    
+    // Format search results as tweet-like objects
+    const formattedResults = searchResults.map((result, index) => {
+      return {
+        id: `search-${index + 1}`,
+        text: `${result.title}. ${result.snippet || ''}`,
+        source: result.link,
+        title: result.title
+      };
+    });
+    
+    console.log(`Retrieved ${formattedResults.length} search results for "${topic}"`);
+    return formattedResults;
   } catch (error) {
-    console.error('Error generating mock search results:', error.message);
-    throw new Error('Failed to search Google');
+    console.error('Error searching Google:', error.message);
+    
+    // Fallback to mock data if Google search fails
+    console.log('Falling back to mock data generation');
+    return generateMockResults(topic, maxResults);
   }
 }
 
