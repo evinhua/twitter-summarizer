@@ -129,13 +129,14 @@ async function searchBing(topic, maxResults = 20) {
  * @returns {Array} - Array of generated tweets
  */
 function generateTweetsFromSearchResults(searchResults, count = 20) {
-  console.log(`Generating ${count} tweets from ${searchResults.length} search results`);
+  // Use the actual number of search results if less than requested count
+  const availableResults = searchResults.length;
+  const actualCount = Math.min(availableResults, count);
   
-  // Ensure count is within the allowed range
-  const tweetCount = Math.min(Math.max(5, count), 50);
+  console.log(`Generating ${actualCount} tweets from ${availableResults} search results`);
   
   // Create tweets based on search results
-  const generatedTweets = searchResults.slice(0, tweetCount).map((result, index) => {
+  const generatedTweets = searchResults.slice(0, actualCount).map((result, index) => {
     // Create different tweet formats to add variety
     const tweetFormats = [
       `Just read this about ${result.title}: ${result.text.substring(0, 100)}...`,

@@ -43,11 +43,18 @@ async function fetchTweetsByTopic(topic, maxTweets = 20) {
       
       // Try to use Google search via Serper API as fallback
       try {
+        // Get search results based on the topic
         const searchResults = await serperService.searchTopicOnGoogle(topic, maxTweets);
-        const generatedTweets = serperService.generateTweetsFromSearchResults(searchResults, maxTweets);
+        
+        // Use the actual number of search results we got to generate tweets
+        // This ensures we respect the user's input for tweet count while working with available data
+        const actualResultCount = Math.min(searchResults.length, maxTweets);
+        console.log(`Found ${searchResults.length} search results, generating ${actualResultCount} tweets`);
+        
+        const generatedTweets = serperService.generateTweetsFromSearchResults(searchResults, actualResultCount);
         
         if (generatedTweets.length > 0) {
-          console.log(`Using ${generatedTweets.length} tweets generated from Google search results`);
+          console.log(`Using ${generatedTweets.length} tweets generated from search results`);
           return generatedTweets;
         }
       } catch (searchError) {
