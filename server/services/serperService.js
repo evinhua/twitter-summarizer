@@ -4,9 +4,9 @@ require('dotenv').config();
 // Serper API key
 const SERPER_API_KEY = process.env.SERPER_API_KEY || "efad9c66159909eff3ce534f8da47d4ba33671d9";
 
-// Create Serper API client
+// Create Serper API client with correct URL
 const serperClient = axios.create({
-  baseURL: 'https://google.serper.dev/search',
+  baseURL: 'https://serpapi.com/search',
   headers: {
     'X-API-KEY': SERPER_API_KEY,
     'Content-Type': 'application/json'
