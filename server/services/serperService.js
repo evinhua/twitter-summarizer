@@ -1,76 +1,125 @@
 const axios = require('axios');
+const cheerio = require('cheerio');
 require('dotenv').config();
 
-// Serper API key
-const SERPER_API_KEY = process.env.SERPER_API_KEY || "efad9c66159909eff3ce534f8da47d4ba33671d9";
-
 /**
- * Search for a topic using Google via direct Google search
+ * Search for a topic using Google via web scraping approach
  * @param {string} topic - The topic to search for
  * @param {number} maxResults - Maximum number of results to return
  * @returns {Array} - Array of search results formatted as tweet-like objects
  */
 async function searchTopicOnGoogle(topic, maxResults = 20) {
   try {
-    console.log(`Searching Google for "${topic}" directly`);
+    console.log(`Searching Google for "${topic}" via web scraping`);
     
-    // Use direct Google search with axios
-    const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
-      params: {
-        key: 'AIzaSyCVAXiUzRYsML1Pv6RwSG1gunmMikTzQqY', // Public API key for demo purposes
-        cx: '017576662512468239146:omuauf_lfve', // Custom search engine ID
-        q: topic,
-        num: Math.min(maxResults, 10) // Google API limits to 10 results per request
-      }
+    // Use DuckDuckGo instead of Google to avoid CAPTCHAs and blocks
+    const response = await axios.get(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(topic)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://duckduckgo.com/',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0'
+      },
+      timeout: 10000 // 10 second timeout
     });
     
-    // Extract search results
-    const searchResults = response.data.items || [];
+    // Parse HTML response
+    const $ = cheerio.load(response.data);
+    const searchResults = [];
     
-    // Format search results as tweet-like objects
-    const formattedResults = searchResults.map((result, index) => {
-      return {
+    // Extract search results from DuckDuckGo HTML
+    $('.result').each((index, element) => {
+      if (index >= maxResults) return false;
+      
+      const titleElement = $(element).find('.result__title');
+      const title = titleElement.text().trim();
+      const link = $(element).find('.result__url').attr('href') || 
+                  $(element).find('.result__title a').attr('href');
+      const snippet = $(element).find('.result__snippet').text().trim();
+      
+      searchResults.push({
         id: `search-${index + 1}`,
-        text: `${result.title}. ${result.snippet || ''}`,
-        source: result.link,
-        title: result.title
-      };
+        text: `${title}. ${snippet}`,
+        source: link,
+        title: title
+      });
     });
     
-    console.log(`Retrieved ${formattedResults.length} search results for "${topic}"`);
-    return formattedResults;
-  } catch (error) {
-    console.error('Error searching Google:', error.message);
+    console.log(`Retrieved ${searchResults.length} search results for "${topic}"`);
     
-    // Fallback to mock data if Google search fails
-    console.log('Falling back to mock data generation');
-    return generateMockResults(topic, maxResults);
+    if (searchResults.length === 0) {
+      throw new Error('No search results found');
+    }
+    
+    return searchResults;
+  } catch (error) {
+    console.error('Error searching via DuckDuckGo:', error.message);
+    
+    // Try Bing as a second fallback
+    try {
+      console.log('Trying Bing search as fallback...');
+      return await searchBing(topic, maxResults);
+    } catch (bingError) {
+      console.error('Error searching via Bing:', bingError.message);
+      throw new Error('Failed to search for content');
+    }
   }
 }
 
 /**
- * Generate mock search results for a topic
- * @param {string} topic - The topic to generate results for
- * @param {number} count - Number of results to generate
- * @returns {Array} - Array of mock search results
+ * Search for a topic using Bing
+ * @param {string} topic - The topic to search for
+ * @param {number} maxResults - Maximum number of results to return
+ * @returns {Array} - Array of search results formatted as tweet-like objects
  */
-function generateMockResults(topic, count = 20) {
-  // Ensure count is within the allowed range
-  const resultCount = Math.min(Math.max(5, count), 50);
-  
-  // Create mock search results
-  const results = [];
-  
-  for (let i = 0; i < resultCount; i++) {
-    results.push({
-      id: `mock-${i + 1}`,
-      text: `This is a mock search result about ${topic}. It contains information that might be relevant to your query.`,
-      source: `https://example.com/result-${i + 1}`,
-      title: `${topic} - Information Source ${i + 1}`
+async function searchBing(topic, maxResults = 20) {
+  try {
+    const response = await axios.get(`https://www.bing.com/search?q=${encodeURIComponent(topic)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      },
+      timeout: 10000 // 10 second timeout
     });
+    
+    // Parse HTML response
+    const $ = cheerio.load(response.data);
+    const searchResults = [];
+    
+    // Extract search results from Bing HTML
+    $('.b_algo').each((index, element) => {
+      if (index >= maxResults) return false;
+      
+      const titleElement = $(element).find('h2');
+      const title = titleElement.text().trim();
+      const link = titleElement.find('a').attr('href');
+      const snippet = $(element).find('.b_caption p').text().trim();
+      
+      searchResults.push({
+        id: `search-${index + 1}`,
+        text: `${title}. ${snippet}`,
+        source: link,
+        title: title
+      });
+    });
+    
+    console.log(`Retrieved ${searchResults.length} search results from Bing for "${topic}"`);
+    
+    if (searchResults.length === 0) {
+      throw new Error('No search results found on Bing');
+    }
+    
+    return searchResults;
+  } catch (error) {
+    console.error('Error in Bing search:', error.message);
+    throw error;
   }
-  
-  return results;
 }
 
 /**
