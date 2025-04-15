@@ -5,12 +5,16 @@ require('dotenv').config();
 /**
  * Search for a topic using Google via web scraping approach
  * @param {string} topic - The topic to search for
- * @param {number} maxResults - Maximum number of results to return
+ * @param {number} exactResults - Exact number of results to return
  * @returns {Array} - Array of search results formatted as tweet-like objects
  */
-async function searchTopicOnGoogle(topic, maxResults = 20) {
+async function searchTopicOnGoogle(topic, exactResults = 20) {
   try {
-    console.log(`Searching Google for "${topic}" via web scraping`);
+    console.log(`Searching for "${topic}" via web scraping - need exactly ${exactResults} results`);
+    
+    // Request more results than needed to ensure we can get the exact number after filtering
+    const bufferMultiplier = 2;
+    const requestResults = exactResults * bufferMultiplier;
     
     // Use DuckDuckGo instead of Google to avoid CAPTCHAs and blocks
     const response = await axios.get(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(topic)}`, {
@@ -32,7 +36,7 @@ async function searchTopicOnGoogle(topic, maxResults = 20) {
     
     // Extract search results from DuckDuckGo HTML
     $('.result').each((index, element) => {
-      if (index >= maxResults) return false;
+      if (index >= requestResults) return false;
       
       const titleElement = $(element).find('.result__title');
       const title = titleElement.text().trim();
@@ -40,28 +44,50 @@ async function searchTopicOnGoogle(topic, maxResults = 20) {
                   $(element).find('.result__title a').attr('href');
       const snippet = $(element).find('.result__snippet').text().trim();
       
-      searchResults.push({
-        id: `search-${index + 1}`,
-        text: `${title}. ${snippet}`,
-        source: link,
-        title: title
-      });
+      // Only add results with meaningful content
+      if (title && snippet && link) {
+        searchResults.push({
+          id: `search-${index + 1}`,
+          text: `${title}. ${snippet}`,
+          source: link,
+          title: title
+        });
+      }
     });
     
-    console.log(`Retrieved ${searchResults.length} search results for "${topic}"`);
+    console.log(`Retrieved ${searchResults.length} raw search results for "${topic}"`);
     
     if (searchResults.length === 0) {
       throw new Error('No search results found');
     }
     
-    return searchResults;
+    // If we don't have enough results, try to get more from Bing
+    if (searchResults.length < exactResults) {
+      try {
+        console.log(`Not enough results (${searchResults.length}/${exactResults}), trying Bing search to supplement...`);
+        const bingResults = await searchBing(topic, exactResults - searchResults.length);
+        
+        // Combine results
+        const combinedResults = [...searchResults, ...bingResults];
+        console.log(`Combined results: ${combinedResults.length} (DuckDuckGo: ${searchResults.length}, Bing: ${bingResults.length})`);
+        
+        // Return exactly the number requested or all available if less
+        return combinedResults.slice(0, exactResults);
+      } catch (bingError) {
+        console.error('Error supplementing with Bing search:', bingError.message);
+        // Continue with just the DuckDuckGo results
+      }
+    }
+    
+    // Return exactly the number requested or all available if less
+    return searchResults.slice(0, exactResults);
   } catch (error) {
     console.error('Error searching via DuckDuckGo:', error.message);
     
     // Try Bing as a second fallback
     try {
-      console.log('Trying Bing search as fallback...');
-      return await searchBing(topic, maxResults);
+      console.log('Trying Bing search as primary fallback...');
+      return await searchBing(topic, exactResults);
     } catch (bingError) {
       console.error('Error searching via Bing:', bingError.message);
       throw new Error('Failed to search for content');
@@ -72,12 +98,18 @@ async function searchTopicOnGoogle(topic, maxResults = 20) {
 /**
  * Search for a topic using Bing
  * @param {string} topic - The topic to search for
- * @param {number} maxResults - Maximum number of results to return
+ * @param {number} exactResults - Exact number of results to return
  * @returns {Array} - Array of search results formatted as tweet-like objects
  */
-async function searchBing(topic, maxResults = 20) {
+async function searchBing(topic, exactResults = 20) {
   try {
-    const response = await axios.get(`https://www.bing.com/search?q=${encodeURIComponent(topic)}`, {
+    console.log(`Searching Bing for "${topic}" - need exactly ${exactResults} results`);
+    
+    // Request more results than needed to ensure we can get the exact number after filtering
+    const bufferMultiplier = 2;
+    const requestResults = exactResults * bufferMultiplier;
+    
+    const response = await axios.get(`https://www.bing.com/search?q=${encodeURIComponent(topic)}&count=${requestResults}`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -94,19 +126,22 @@ async function searchBing(topic, maxResults = 20) {
     
     // Extract search results from Bing HTML
     $('.b_algo').each((index, element) => {
-      if (index >= maxResults) return false;
+      if (index >= requestResults) return false;
       
       const titleElement = $(element).find('h2');
       const title = titleElement.text().trim();
       const link = titleElement.find('a').attr('href');
       const snippet = $(element).find('.b_caption p').text().trim();
       
-      searchResults.push({
-        id: `search-${index + 1}`,
-        text: `${title}. ${snippet}`,
-        source: link,
-        title: title
-      });
+      // Only add results with meaningful content
+      if (title && snippet && link) {
+        searchResults.push({
+          id: `search-${index + 1}`,
+          text: `${title}. ${snippet}`,
+          source: link,
+          title: title
+        });
+      }
     });
     
     console.log(`Retrieved ${searchResults.length} search results from Bing for "${topic}"`);
@@ -115,7 +150,8 @@ async function searchBing(topic, maxResults = 20) {
       throw new Error('No search results found on Bing');
     }
     
-    return searchResults;
+    // Return exactly the number requested or all available if less
+    return searchResults.slice(0, exactResults);
   } catch (error) {
     console.error('Error in Bing search:', error.message);
     throw error;
@@ -125,18 +161,17 @@ async function searchBing(topic, maxResults = 20) {
 /**
  * Generate tweet-like content based on search results
  * @param {Array} searchResults - Array of search results
- * @param {number} count - Number of tweets to generate
+ * @param {number} count - Number of tweets to generate (should match searchResults.length)
  * @returns {Array} - Array of generated tweets
  */
-function generateTweetsFromSearchResults(searchResults, count = 20) {
-  // Use the actual number of search results if less than requested count
+function generateTweetsFromSearchResults(searchResults, count) {
+  // We should have exactly the right number of search results
   const availableResults = searchResults.length;
-  const actualCount = Math.min(availableResults, count);
   
-  console.log(`Generating ${actualCount} tweets from ${availableResults} search results`);
+  console.log(`Generating ${availableResults} tweets from ${availableResults} search results`);
   
-  // Create tweets based on search results
-  const generatedTweets = searchResults.slice(0, actualCount).map((result, index) => {
+  // Create tweets based on search results - one tweet per search result
+  const generatedTweets = searchResults.map((result, index) => {
     // Create different tweet formats to add variety
     const tweetFormats = [
       `Just read this about ${result.title}: ${result.text.substring(0, 100)}...`,
