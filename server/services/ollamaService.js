@@ -8,7 +8,20 @@ const ollamaClient = axios.create({
   }
 });
 
-async function getSummary(topic, tweetText) {
+// Default model to use if none is specified
+const DEFAULT_MODEL = 'gemma3:4b';
+
+async function getAvailableModels() {
+  try {
+    const response = await ollamaClient.get('/tags');
+    return response.data.models || [];
+  } catch (error) {
+    console.error('Error fetching Ollama models:', error);
+    return [];
+  }
+}
+
+async function getSummary(topic, tweetText, model = DEFAULT_MODEL) {
   try {
     const prompt = `
       Below are several tweets about "${topic}". 
@@ -21,19 +34,19 @@ async function getSummary(topic, tweetText) {
     `;
     
     const response = await ollamaClient.post('/generate', {
-      model: 'gemma3:4b',
+      model: model,
       prompt: prompt,
       stream: false
     });
     
     return response.data.response;
   } catch (error) {
-    console.error('Error getting summary from Ollama:', error);
-    return 'Failed to generate summary. Please ensure Ollama is running with the gemma3:4b model.';
+    console.error(`Error getting summary from Ollama using model ${model}:`, error);
+    return `Failed to generate summary. Please ensure Ollama is running with the ${model} model.`;
   }
 }
 
-async function getSentiment(tweetText) {
+async function getSentiment(tweetText, model = DEFAULT_MODEL) {
   try {
     const prompt = `
       Analyze the sentiment of the following tweets. Classify the overall sentiment as one of:
@@ -52,19 +65,21 @@ async function getSentiment(tweetText) {
     `;
     
     const response = await ollamaClient.post('/generate', {
-      model: 'gemma3:4b',
+      model: model,
       prompt: prompt,
       stream: false
     });
     
     return response.data.response;
   } catch (error) {
-    console.error('Error getting sentiment from Ollama:', error);
-    return 'Failed to analyze sentiment. Please ensure Ollama is running with the gemma3:4b model.';
+    console.error(`Error getting sentiment from Ollama using model ${model}:`, error);
+    return `Failed to analyze sentiment. Please ensure Ollama is running with the ${model} model.`;
   }
 }
 
 module.exports = {
   getSummary,
-  getSentiment
+  getSentiment,
+  getAvailableModels,
+  DEFAULT_MODEL
 };

@@ -1,59 +1,59 @@
 .summary-display {
-  background-color: white;
-  border: 1px solid #e1e8ed;
+  background-color: #f9f9f9;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stats {
-  background-color: #f5f8fa;
-  padding: 15px;
-  border-bottom: 1px solid #e1e8ed;
   display: flex;
-  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .stat-item {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .stat-label {
-  display: block;
-  font-size: 0.9rem;
-  color: #657786;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: #555;
 }
 
 .stat-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #14171a;
+  font-weight: 500;
+  color: #1da1f2;
+  font-size: 1.1rem;
+}
+
+.model-name {
+  font-family: monospace;
+  background-color: #f0f0f0;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .summary-section,
 .sentiment-section {
-  padding: 20px;
+  margin-bottom: 1.5rem;
 }
 
-.summary-section {
-  border-bottom: 1px solid #e1e8ed;
-}
-
-h2 {
-  color: #14171a;
-  font-size: 1.2rem;
-  margin-bottom: 15px;
-  font-weight: bold;
+.summary-section h2,
+.sentiment-section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 0.75rem;
+  color: #333;
 }
 
 .summary-content,
 .sentiment-content {
   line-height: 1.6;
-  color: #14171a;
   white-space: pre-wrap;
-}
-
-.sentiment-content {
-  font-style: italic;
 }

@@ -8,7 +8,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
-  const analyzeTopic = async (topic, tweetCount) => {
+  const analyzeTopic = async (topic, tweetCount, model) => {
     setLoading(true);
     setError(null);
     
@@ -18,7 +18,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ topic, tweetCount }),
+        body: JSON.stringify({ topic, tweetCount, model }),
       });
       
       if (!response.ok) {
@@ -51,15 +51,18 @@ function App() {
         {result && <SummaryDisplay 
           summary={result.summary} 
           sentiment={result.sentiment} 
-          tweetCount={result.tweetCount} 
+          tweetCount={result.tweetCount}
+          model={result.model}
         />}
       </main>
       
       <footer>
-        <p>Powered by Ollama and Gemma3 4B</p>
+        <p>Powered by Ollama with locally installed models</p>
       </footer>
     </div>
   );
 }
+
+export default App;
 
 export default App;

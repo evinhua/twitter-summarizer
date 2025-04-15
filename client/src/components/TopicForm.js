@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import './TopicForm.css';
+import ModelSelector from './ModelSelector';
 
 function TopicForm({ onSubmit, disabled }) {
   const [topic, setTopic] = useState('');
   const [tweetCount, setTweetCount] = useState(20);
+  const [selectedModel, setSelectedModel] = useState('gemma3:4b');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (topic.trim()) {
-      onSubmit(topic.trim(), tweetCount);
+      onSubmit(topic.trim(), tweetCount, selectedModel);
     }
   };
 
@@ -48,6 +50,12 @@ function TopicForm({ onSubmit, disabled }) {
           </div>
         </div>
         
+        <ModelSelector 
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          disabled={disabled}
+        />
+        
         <button type="submit" disabled={disabled || !topic.trim()}>
           {disabled ? 'Analyzing...' : 'Analyze Topic'}
         </button>
@@ -55,5 +63,7 @@ function TopicForm({ onSubmit, disabled }) {
     </div>
   );
 }
+
+export default TopicForm;
 
 export default TopicForm;

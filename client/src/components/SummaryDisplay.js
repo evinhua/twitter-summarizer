@@ -1,7 +1,7 @@
 import React from 'react';
 import './SummaryDisplay.css';
 
-function SummaryDisplay({ summary, sentiment, tweetCount }) {
+function SummaryDisplay({ summary, sentiment, tweetCount, model }) {
   return (
     <div className="summary-display">
       <div className="stats">
@@ -9,6 +9,12 @@ function SummaryDisplay({ summary, sentiment, tweetCount }) {
           <span className="stat-label">Tweets Analyzed:</span>
           <span className="stat-value">{tweetCount}</span>
         </div>
+        {model && (
+          <div className="stat-item">
+            <span className="stat-label">Model Used:</span>
+            <span className="stat-value model-name">{model}</span>
+          </div>
+        )}
       </div>
       
       <div className="summary-section">
@@ -27,5 +33,7 @@ function SummaryDisplay({ summary, sentiment, tweetCount }) {
     </div>
   );
 }
+
+export default SummaryDisplay;
 
 export default SummaryDisplay;
