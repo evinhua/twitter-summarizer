@@ -35,5 +35,3 @@ function SummaryDisplay({ summary, sentiment, tweetCount, model }) {
 }
 
 export default SummaryDisplay;
-
-export default SummaryDisplay;
