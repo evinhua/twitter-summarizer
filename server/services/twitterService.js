@@ -20,42 +20,46 @@ async function fetchTweetsByTopic(topic, maxTweets = 20) {
   try {
     console.log(`Attempting to fetch ${maxTweets} tweets about "${topic}"`);
     
-    // Try to use Twitter API
+    // Try to use Serper API as primary search method
     try {
-      const response = await twitterApiClient.get('/tweets/search/recent', {
-        params: {
-          query: topic,
-          max_results: maxTweets,
-          'tweet.fields': 'created_at,public_metrics'  // Fixed: Use quotes around parameter name with dot
-        }
-      });
+      console.log(`Using Serper API as primary search method for "${topic}"`);
+      // Get exactly the number of search results requested by the user
+      console.log(`Attempting to get exactly ${maxTweets} search results for tweet generation`);
+      const searchResults = await serperService.searchTopicOnGoogle(topic, maxTweets);
       
-      if (response.data && response.data.data) {
-        console.log(`Successfully retrieved ${response.data.data.length} tweets from Twitter API`);
-        return response.data.data.map(tweet => ({
-          id: tweet.id,
-          text: tweet.text
-        }));
+      // Generate tweets from the search results - should be exactly the requested number
+      const generatedTweets = serperService.generateTweetsFromSearchResults(searchResults, searchResults.length);
+      
+      if (generatedTweets.length > 0) {
+        console.log(`Successfully generated ${generatedTweets.length}/${maxTweets} tweets from search results via Serper API`);
+        return generatedTweets;
+      } else {
+        console.log('No tweets generated from Serper API results - trying Twitter API');
+        throw new Error('No tweets generated from Serper API results');
       }
-    } catch (twitterError) {
-      console.error('Twitter API error:', twitterError.message);
-      console.log('Twitter API access failed - Trying Google search fallback');
+    } catch (serperError) {
+      console.error('Serper API error:', serperError.message);
+      console.log('Serper API search failed - Trying Twitter API as fallback');
       
-      // Try to use Google search via Serper API as fallback
+      // Try to use Twitter API as fallback
       try {
-        // Get exactly the number of search results requested by the user
-        console.log(`Attempting to get exactly ${maxTweets} search results for tweet generation`);
-        const searchResults = await serperService.searchTopicOnGoogle(topic, maxTweets);
+        const response = await twitterApiClient.get('/tweets/search/recent', {
+          params: {
+            query: topic,
+            max_results: maxTweets,
+            'tweet.fields': 'created_at,public_metrics'  // Fixed: Use quotes around parameter name with dot
+          }
+        });
         
-        // Generate tweets from the search results - should be exactly the requested number
-        const generatedTweets = serperService.generateTweetsFromSearchResults(searchResults, searchResults.length);
-        
-        if (generatedTweets.length > 0) {
-          console.log(`Successfully generated ${generatedTweets.length}/${maxTweets} tweets from search results`);
-          return generatedTweets;
+        if (response.data && response.data.data) {
+          console.log(`Successfully retrieved ${response.data.data.length} tweets from Twitter API as fallback`);
+          return response.data.data.map(tweet => ({
+            id: tweet.id,
+            text: tweet.text
+          }));
         }
-      } catch (searchError) {
-        console.error('Search fallback error:', searchError.message);
+      } catch (twitterError) {
+        console.error('Twitter API fallback error:', twitterError.message);
       }
     }
     

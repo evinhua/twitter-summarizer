@@ -10,7 +10,7 @@ A web application that summarizes and analyzes sentiment for specific topics on 
 - Get sentiment analysis of the tweets
 - Uses local Ollama instance for privacy and control
 - **NEW: Select from any locally installed Ollama model** for analysis
-- **NEW: Google search fallback** when Twitter API is unavailable
+- **NEW: Serper API as primary source** with Twitter API as fallback
 
 ## Tech Stack
 
@@ -18,8 +18,8 @@ A web application that summarizes and analyzes sentiment for specific topics on 
 - **Backend**: Node.js with Express
 - **LLM**: Ollama with any locally installed model (default: Gemma3 4B)
 - **APIs**: 
-  - Twitter API v2 (primary source)
-  - Google Search via Serper API (fallback)
+  - Google Search via Serper API (primary source)
+  - Twitter API v2 (fallback)
 
 ## Prerequisites
 
@@ -109,11 +109,16 @@ If Ollama is not running or no models are found, the application will default to
 
 ## How It Works
 
-1. The application first attempts to fetch tweets from the Twitter API
-2. If Twitter API access fails, it falls back to Google search via Serper API
-3. Search results are transformed into tweet-like format for analysis
-4. If both Twitter and Google search fail, mock tweets are used
-5. The selected Ollama model processes the collected data to generate summaries and sentiment analysis
+1. The application first attempts to fetch data using Serper API for Google search results
+2. If not enough results are found, it tries multiple query variations with Serper API
+3. If Serper API access fails or returns insufficient results, it tries:
+   - News site scraping (Google News, Reuters, BBC)
+   - Reddit scraping
+   - Bing search
+   - DuckDuckGo search
+4. As a last resort, it falls back to the Twitter API
+5. If all search methods fail, mock tweets are used
+6. The selected Ollama model processes the collected data to generate summaries and sentiment analysis
 
 ## License
 
